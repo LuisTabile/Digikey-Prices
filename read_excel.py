@@ -86,7 +86,7 @@ for idx, row in df.iterrows():
                 # Convert the price to a number
                 price = float(price_text)
                 # Update the price in the DataFrame row
-                df.at[idx, 'preco'] = price
+                df.at[idx, 'price'] = price
                 print(f"Updated price: {price}")
 
     except Exception as e:
