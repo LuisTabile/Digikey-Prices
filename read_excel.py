@@ -1,3 +1,4 @@
+import os
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -16,6 +17,11 @@ output_file = input("Digite o nome do novo arquivo xlsx. Se deixar em branco, ir
 if not output_file:
     output_file = input_file
     print(f"Aviso: O arquivo de saída será sobrescrito com o mesmo nome do arquivo de entrada: {output_file}")
+
+# Check if the input file exists
+if not os.path.isfile(input_file):
+    print(f"Erro: O arquivo de entrada '{input_file}' não existe. Certifique-se de que o arquivo esteja na mesma pasta que o script.")
+    exit(1)
 
 # Open the input Excel file
 df = pd.read_excel(input_file)
