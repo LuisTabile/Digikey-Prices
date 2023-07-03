@@ -6,6 +6,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 from bs4 import BeautifulSoup
+import re
 
 # Abre o arquivo xlsx
 df = pd.read_excel('Teste.xlsx')
@@ -45,7 +46,11 @@ for idx, row in df.iterrows():
             # Verifica se a primeira célula contém '1000'
             if len(cells) > 0 and cells[0].text.strip() == '1.000':
                 # Remove o símbolo de dólar e espaços do texto
-                price = cells[1].text.replace('$', '').strip()
+                price_text = cells[1].text.replace('$', '').strip()
+                # Substitui a vírgula pelo ponto na string
+                price_text = price_text.replace(',', '.')
+                # Converte o preço para um número
+                price = float(price_text)
                 # Atualiza o preço na linha do DataFrame
                 df.at[idx, 'preco'] = price
                 print(f"Preço atualizado para: {price}")
@@ -58,4 +63,4 @@ for idx, row in df.iterrows():
 driver.quit()
 
 # Salva o DataFrame alterado de volta para o arquivo xlsx
-df.to_excel('arquivo.xlsx', index=False)
+df.to_excel('Teste.xlsx', index=False)
