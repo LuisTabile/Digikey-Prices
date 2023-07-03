@@ -47,7 +47,8 @@ for idx, row in df.iterrows():
         # Find all rows in the table
         rows = soup.find('tbody').find_all('tr')
 
-        # For each row in the table
+        # Search for the cell containing '1.000'
+        price_found = False
         for row in rows:
             # Find all cells in the row
             cells = row.find_all('td')
@@ -63,7 +64,24 @@ for idx, row in df.iterrows():
                 # Update the price in the DataFrame row
                 df.at[idx, 'preco'] = price
                 print(f"Updated price: {price}")
+                price_found = True
                 break
+
+        if not price_found:
+            # Find the last cell in the middle column
+            cells = soup.select("table.MuiTable-root.tss-1w92vj0-table.css-u6unfi td:nth-child(2)")
+            if cells:
+                # Get the last cell in the middle column
+                last_cell = cells[-1]
+                # Remove the dollar symbol and spaces from the text
+                price_text = last_cell.text.replace('$', '').strip()
+                # Replace the comma with a dot in the string
+                price_text = price_text.replace(',', '.')
+                # Convert the price to a number
+                price = float(price_text)
+                # Update the price in the DataFrame row
+                df.at[idx, 'preco'] = price
+                print(f"Updated price: {price}")
 
     except Exception as e:
         print(f"Error processing URL: {url}, error: {e}")
