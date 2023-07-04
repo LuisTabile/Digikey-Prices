@@ -1,4 +1,6 @@
 import os
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -7,7 +9,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 from bs4 import BeautifulSoup
-import re
 
 # Prompt the user for input and output file names
 input_file = input("Digite o nome do arquivo xlsx, junto com a extensão. Exemplo: Teste.xlsx: ")
@@ -30,10 +31,16 @@ df = pd.read_excel(input_file)
 webdriver_service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=webdriver_service)
 
+# Base URL for product page
+base_url = "https://www.digikey.com.br/products/pt?keywords="
+
 for idx, row in df.iterrows():
     # Generate the URL
-    url = f'https://www.digikey.com.br/pt/products/detail/{row["codigo"]}'
+    url = base_url + str(row["digikey"])
     print(f"Processing URL: {url}")
+
+    # Update the link in the DataFrame
+    df.at[idx, 'link'] = url
 
     # Load the page
     driver.get(url)
@@ -60,7 +67,7 @@ for idx, row in df.iterrows():
             cells = row.find_all('td')
 
             # Check if the first cell contains '1.000'
-            if len(cells) > 0 and cells[0].text.strip() == '1.000':
+            if len(cells) > 0 and cells[0].text.strip() == '1.0000':
                 # Remove the dollar symbol and spaces from the text
                 price_text = cells[1].text.replace('$', '').strip()
                 # Replace the comma with a dot in the string
@@ -86,7 +93,7 @@ for idx, row in df.iterrows():
                 # Convert the price to a number
                 price = float(price_text)
                 # Update the price in the DataFrame row
-                df.at[idx, 'price'] = price
+                df.at[idx, 'preco'] = price
                 print(f"Updated price: {price}")
 
     except Exception as e:
@@ -95,5 +102,13 @@ for idx, row in df.iterrows():
 # Close the browser
 driver.quit()
 
-# Save the modified DataFrame back to the output Excel file
-df.to_excel(output_file, index=False)
+# Create a new workbook
+workbook = Workbook()
+# Create a new sheet in the workbook
+sheet = workbook.active
+# Save the modified DataFrame to the sheet
+for row in dataframe_to_rows(df, index=False, header=True):
+    sheet.append(row)
+
+# Save the workbook to the output Excel file
+workbook.save(output_file)
