@@ -11,17 +11,17 @@ import pandas as pd
 from bs4 import BeautifulSoup
 
 # Prompt the user for input and output file names
-input_file = input("Digite o nome do arquivo xlsx, junto com a extensão. Exemplo: Teste.xlsx: ")
-output_file = input("Digite o nome do novo arquivo xlsx. Se deixar em branco, irá sobrescrever o arquivo de entrada: ")
+input_file = input("Enter the name of the xlsx file, including the extension. Example: Test.xlsx: ")
+output_file = input("Enter the name of the new xlsx file. If left blank, it will overwrite the input file: ")
 
 # Check if the output file name is empty
 if not output_file:
     output_file = input_file
-    print(f"Aviso: O arquivo de saída será sobrescrito com o mesmo nome do arquivo de entrada: {output_file}")
+    print(f"Warning: The output file will be overwritten with the same name as the input file: {output_file}")
 
 # Check if the input file exists
 if not os.path.isfile(input_file):
-    print(f"Erro: O arquivo de entrada '{input_file}' não existe. Certifique-se de que o arquivo esteja na mesma pasta que o script.")
+    print(f"Error: The input file '{input_file}' does not exist. Make sure the file is in the same directory as the script.")
     exit(1)
 
 # Open the input Excel file
