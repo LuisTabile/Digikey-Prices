@@ -9,51 +9,25 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 from bs4 import BeautifulSoup
+from fastcore.all import parallel
 
-# Prompt the user for input and output file names
-input_file = input("Enter the name of the xlsx file, including the extension. Example: Test.xlsx: ")
-output_file = input("Enter the name of the new xlsx file. If left blank, it will overwrite the input file: ")
-
-# Check if the output file name is empty
-if not output_file:
-    output_file = input_file
-    print(f"Warning: The output file will be overwritten with the same name as the input file: {output_file}")
-
-# Check if the input file exists
-if not os.path.isfile(input_file):
-    print(f"Error: The input file '{input_file}' does not exist. Make sure the file is in the same directory as the script.")
-    exit(1)
-
-# Open the input Excel file
-df = pd.read_excel(input_file)
-
-# Configure the Chrome driver
-webdriver_service = Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=webdriver_service)
-
-# Base URL for product page
-base_url = "https://www.digikey.com.br/products/pt?keywords="
-
-for idx, row in df.iterrows():
-    code = str(row["code"]).strip()
+def process_url(row):
+    code = str(row.code).strip()
 
     # Check if 'code' is an empty string, None or 'nan'
     if not code or code.lower() == "nan":
-        continue
+        return None
 
     # Generate the URL
     url = base_url + code
     print(f"Processing URL: {url}")
-
-    # Update the link in the DataFrame
-    df.at[idx, 'link'] = url
 
     # Load the page
     driver.get(url)
 
     try:
         # Wait up to 10 seconds until the price table is loaded on the page
-        table = WebDriverWait(driver, 0.5).until(
+        table = WebDriverWait(driver, 0.1).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table.MuiTable-root.tss-1w92vj0-table.css-u6unfi"))
         )
 
@@ -80,41 +54,55 @@ for idx, row in df.iterrows():
                 price_text = price_text.replace(',', '.')
                 # Convert the price to a number
                 price = float(price_text)
-                # Update the price in the DataFrame row
-                df.at[idx, 'price'] = price
-                print(f"Updated price: {price}")
-                price_found = True
-                break
+                return price
 
-        if not price_found:
-            # Find the last cell in the middle column
-            cells = soup.select("table.MuiTable-root.tss-1w92vj0-table.css-u6unfi td:nth-child(2)")
-            if cells:
-                # Get the last cell in the middle column
-                last_cell = cells[-1]
-                # Remove the dollar symbol and spaces from the text
-                price_text = last_cell.text.replace('$', '').strip()
-                # Replace the comma with a dot in the string
-                price_text = price_text.replace(',', '.')
-                # Convert the price to a number
-                price = float(price_text)
-                # Update the price in the DataFrame row
-                df.at[idx, 'preco'] = price
-                print(f"Updated price: {price}")
+        # Find the last cell in the middle column
+        cells = soup.select("table.MuiTable-root.tss-1w92vj0-table.css-u6unfi td:nth-child(2)")
+        if cells:
+            # Get the last cell in the middle column
+            last_cell = cells[-1]
+            # Remove the dollar symbol and spaces from the text
+            price_text = last_cell.text.replace('$', '').strip()
+            # Replace the comma with a dot in the string
+            price_text = price_text.replace(',', '.')
+            # Convert the price to a number
+            price = float(price_text)
+            return price
 
     except Exception as e:
-        print(f"Error processing URL: {url}, error: {e}")
+        print(f"Error processing URL: {url}")
+        # print(f"Error processing URL: {url}, error: {e}") - Development Only
+    return None
+
+# Prompt the user for input and output file names
+input_file = input("Enter the name of the xlsx file, including the extension. Example: Test.xlsx: ")
+output_file = input("Enter the name of the new xlsx file. If left blank, it will overwrite the input file: ")
+
+# Check if the output file name is empty
+if not output_file:
+    output_file = input_file
+    print(f"Warning: The output file will be overwritten with the same name as the input file: {output_file}")
+
+# Check if the input file exists
+if not os.path.isfile(input_file):
+    print(f"Error: The input file '{input_file}' does not exist. Make sure the file is in the same directory as the script.")
+    exit(1)
+
+# Open the input Excel file
+df = pd.read_excel(input_file)
+
+# Configure the Chrome driver
+webdriver_service = Service(ChromeDriverManager(cache_valid_range=1).install())
+driver = webdriver.Chrome(service=webdriver_service)
+
+# Base URL for product page
+base_url = "https://www.digikey.com.br/products/pt?keywords="
+
+# Process each row in the DataFrame
+df['price'] = parallel(process_url, df.itertuples(index=False), n_workers=0, progress=True)
 
 # Close the browser
 driver.quit()
 
-# Create a new workbook
-workbook = Workbook()
-# Create a new sheet in the workbook
-sheet = workbook.active
-# Save the modified DataFrame to the sheet
-for row in dataframe_to_rows(df, index=False, header=True):
-    sheet.append(row)
-
-# Save the workbook to the output Excel file
-workbook.save(output_file)
+# Save the DataFrame to the output Excel file
+df.to_excel(output_file, index=False, header=True)
