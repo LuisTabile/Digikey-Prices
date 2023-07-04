@@ -35,14 +35,14 @@ driver = webdriver.Chrome(service=webdriver_service)
 base_url = "https://www.digikey.com.br/products/pt?keywords="
 
 for idx, row in df.iterrows():
-    digikey = str(row["digikey"]).strip()
+    code = str(row["code"]).strip()
 
-    # Check if 'digikey' is an empty string, None or 'nan'
-    if not digikey or digikey.lower() == "nan":
+    # Check if 'code' is an empty string, None or 'nan'
+    if not code or code.lower() == "nan":
         continue
 
     # Generate the URL
-    url = base_url + digikey
+    url = base_url + code
     print(f"Processing URL: {url}")
 
     # Update the link in the DataFrame
