@@ -35,8 +35,14 @@ driver = webdriver.Chrome(service=webdriver_service)
 base_url = "https://www.digikey.com.br/products/pt?keywords="
 
 for idx, row in df.iterrows():
+    digikey = str(row["digikey"]).strip()
+
+    # Check if 'digikey' is an empty string, None or 'nan'
+    if not digikey or digikey.lower() == "nan":
+        continue
+
     # Generate the URL
-    url = base_url + str(row["digikey"])
+    url = base_url + digikey
     print(f"Processing URL: {url}")
 
     # Update the link in the DataFrame
@@ -47,7 +53,7 @@ for idx, row in df.iterrows():
 
     try:
         # Wait up to 10 seconds until the price table is loaded on the page
-        table = WebDriverWait(driver, 10).until(
+        table = WebDriverWait(driver, 0.5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "table.MuiTable-root.tss-1w92vj0-table.css-u6unfi"))
         )
 
@@ -67,7 +73,7 @@ for idx, row in df.iterrows():
             cells = row.find_all('td')
 
             # Check if the first cell contains '1.000'
-            if len(cells) > 0 and cells[0].text.strip() == '1.0000':
+            if len(cells) > 0 and cells[0].text.strip() == '100.000':
                 # Remove the dollar symbol and spaces from the text
                 price_text = cells[1].text.replace('$', '').strip()
                 # Replace the comma with a dot in the string
