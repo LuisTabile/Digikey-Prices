@@ -162,5 +162,5 @@ cython_debug/
 # Ignore folder .vscode
 .vscode/
 
-# Ignore file ~$Teste.xlsx
-~$Teste.xlsx
+# Ignore all .xlsx files
+*.xlsx
