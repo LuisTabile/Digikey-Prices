@@ -26,6 +26,11 @@ You can install the packages using pip (Python package manager). Execute the fol
 4. Wait while the script processes each code from the Bill of Materials and extracts the corresponding prices.
 5. Upon completion, the script will save the output xlsx file with the updated prices.
 
+The table must be like this
+
+![image](https://github.com/LuisTabile/Digikey-Prices/assets/79091246/12620618-e49a-4293-b826-18de892124da)
+
+
 ## Notes
 
 - Make sure the input file (BOM) is in the same directory as the script.
