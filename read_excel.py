@@ -1,26 +1,22 @@
 import os
-from openpyxl import Workbook
-from openpyxl.utils.dataframe import dataframe_to_rows
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 import pandas as pd
 from bs4 import BeautifulSoup
-from fastcore.all import parallel
 
 def process_url(row):
     code = str(row.code).strip()
 
-    # Check if 'code' is an empty string, None or 'nan'
+    # Check if 'code' is an empty string, None, or 'nan'
     if not code or code.lower() == "nan":
         return None
 
     # Generate the URL
     url = base_url + code
-    print(f"Processing URL: {url}")
 
     # Load the page
     driver.get(url)
@@ -71,7 +67,6 @@ def process_url(row):
 
     except Exception as e:
         print(f"Error processing URL: {url}")
-        # print(f"Error processing URL: {url}, error: {e}") - Development Only
     return None
 
 # Prompt the user for input and output file names
@@ -88,18 +83,20 @@ if not os.path.isfile(input_file):
     print(f"Error: The input file '{input_file}' does not exist. Make sure the file is in the same directory as the script.")
     exit(1)
 
-# Open the input Excel file
-df = pd.read_excel(input_file)
-
-# Configure the Chrome driver
-webdriver_service = Service(ChromeDriverManager(cache_valid_range=1).install())
-driver = webdriver.Chrome(service=webdriver_service)
+# Configure the Microsoft Edge driver
+webdriver_service = Service(EdgeChromiumDriverManager(cache_valid_range=1).install())
+options = webdriver.EdgeOptions()
+options.add_argument("--log-level=3")
+driver = webdriver.Edge(service=webdriver_service, options=options)
 
 # Base URL for product page
 base_url = "https://www.digikey.com.br/products/pt?keywords="
 
+# Open the input Excel file
+df = pd.read_excel(input_file)
+
 # Process each row in the DataFrame
-df['price'] = parallel(process_url, df.itertuples(index=False), n_workers=0, progress=True)
+df['price'] = df.apply(process_url, axis=1)
 
 # Close the browser
 driver.quit()
